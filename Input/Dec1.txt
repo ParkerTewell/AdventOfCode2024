@@ -1,7 +1,3 @@
-# Pair up the smallest number in the left list with the smallest number in the right list
-from heapq import heappush, heappop
-
-test = """
 60236   87497
 27507   18604
 69810   73952
@@ -1002,17 +998,3 @@ test = """
 89844   36377
 43375   90916
 62268   92108
-    """
-lines = test.strip().split("\n")
-left, right = [], []
-
-for line in lines:
-    x, y = map(int, line.split())
-    heappush(left, x)  # min heap
-    heappush(right, y)  # min heap
-
-soln = 0
-while left and right:
-    soln += abs(heappop(left)-heappop(right))
-
-print(soln)
