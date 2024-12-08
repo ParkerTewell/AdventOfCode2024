@@ -1,4 +1,3 @@
-import copy
 from collections import Counter
 with open('AdventOfCode2024/Input/Dec6.txt') as f:
     lines = f.readlines()
@@ -52,7 +51,7 @@ def pt2(pos):
             rd, cd, _ = directions[grid[r][c]]
 
             times_visited_wall[(r+rd, c+cd)] += 1
-            if 100 in times_visited_wall.values():
+            if 3 in times_visited_wall.values():
                 return True
         else:
             grid[r+rd][c+cd] = directions[orientation]
