@@ -3,15 +3,13 @@ with open('Input/Dec9.txt') as f:
     line = f.readline()
 
 blocks, ID, free_space = [], 0, False
-file_length, stack, file_start = defaultdict(
-    int), deque(), {}  # needed for pt2
+file_length, file_start = defaultdict(int), {}  # needed for pt2
 
 i = 0
 for c in line:
     for _ in range(int(c)):
         if not free_space:
             file_length[ID] += 1
-            stack.append(ID)
             # the starting position of the file, add length to get end bound
             if ID not in file_start:
                 file_start[ID] = i
@@ -19,8 +17,7 @@ for c in line:
         i += 1
     free_space = not free_space
     ID += free_space
-# print(''.join(blocks))
-# print(file_start)
+stack = [i for i in range(ID)]
 
 
 def pt1():
@@ -43,15 +40,7 @@ def calc_dist(lptr):
 
 
 def fill_space(lptr, dist):
-    global stack
-    queue = deque()
-    while stack and file_length[stack[-1]] > dist:
-        queue.appendleft(stack.pop())
-    if stack:
-        f = stack.pop()
-        stack += queue
-        move_file(f, lptr)
-        free_space(f)
+    pass
 
 
 def move_file(file, ptr):
@@ -65,28 +54,22 @@ def free_space(file):
 
 
 def pt2():
-    global blocks
-    lptr = blocks.index('.')
-    while lptr < len(blocks):
-        dist = calc_dist(lptr)
-        # print(f"free space: {dist}")
-        fill_space(lptr, dist)
-        # print(''.join(blocks))
-        lptr += 1  # skip space if no file is small enough
-        while lptr < len(blocks) and blocks[lptr] != '.':
-            lptr += 1
-    return sum2()
+    while stack:
+        f = stack.pop()
+        lptr = blocks.index('.')
 
+        while lptr < len(blocks) and lptr < file_start[f]:
+            dist = calc_dist(lptr)
+            if dist >= file_length[f]:
+                move_file(f, lptr)
+                free_space(f)
+                break
 
-def sum2():
-    ret = 0
-    for i in range(len(blocks)):
-        if blocks[i] != ".":
-            ret += int(blocks[i]) * i
-    return ret
+            lptr += 1  # skip space if no file is small enough
+            while lptr < len(blocks) and blocks[lptr] != '.':
+                lptr += 1
+    return sum([int(blocks[i]) * i if blocks[i] != "." else 0 for i in range(len(blocks))])
 
 
 # print(pt1())
 print(pt2())
-# print(''.join(blocks))
-# print(file_length)
