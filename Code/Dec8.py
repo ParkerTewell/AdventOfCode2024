@@ -36,7 +36,6 @@ def pt1(nodes):
 def resonant_harmonics(pos, delta, op):
     antinodes = set()
     while 0 <= op(pos[0], delta[0]) < n and 0 <= op(pos[1], delta[1]) < m:
-        # print(op(pos[0], delta[0]), op(pos[1], delta[1]))
         antinodes.add((op(pos[0], delta[0]), op(pos[1], delta[1])))
         pos = (op(pos[0], delta[0]), op(pos[1], delta[1]))
     return antinodes
@@ -49,12 +48,11 @@ def pt2(nodes):
             for pos2 in nodes[node]:
                 if pos2 != pos1:
                     distance = (pos1[0]-pos2[0], pos1[1]-pos2[1])
-                    # print(f"node: {node}, pos: {pos1}, dist {distance}")
                     antinodes |= resonant_harmonics(pos1, distance, add)
                     antinodes |= resonant_harmonics(pos1, distance, sub)
 
     return len(antinodes)
 
 
-# print(pt1(nodes))
+print(pt1(nodes))
 print(pt2(nodes))
