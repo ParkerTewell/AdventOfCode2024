@@ -4,7 +4,7 @@ with open('Input/Dec12.txt') as f:
 n, m = len(grid), len(grid[0])
 
 # for r in grid:
-#     print(r)
+#     rint(r)
 
 
 def bfs(r, c):
@@ -26,16 +26,41 @@ def bfs(r, c):
     return area, perimeter, seen
 
 
-def pt1():
-    seen, soln = set(), 0
+def solve():
+    seen, soln1, soln2 = set(), 0, 0
     for r in range(n):
         for c in range(m):
             if (r, c) not in seen:
                 seen.add((r, c))
                 a, p, s = bfs(r, c)
+                soln1 += a * p
+                soln2 += a * countSides(s)
                 seen |= s
-                soln += a*p
-    return soln
+    return soln1, soln2
+
+# first check that a plot is on the perimeter of the region
+# once we find an unmarked plot, mark it and all its neighbors in the
+# to mark these neighbors, multiply the delta by a positive or negative scalar to go in both directions
 
 
-print(pt1())
+def countSides(region):
+    sides = 0
+    for rd, cd in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        seen = set()
+        for plot in region:
+            r, c = plot
+            # only want exterior plots that haven't been seen
+            if (r, c) not in seen and (r + rd, c + cd) not in region:
+                sides += 1
+                # mark this side as seen
+                for scalar in [-1, 1]:
+                    r, c = plot
+                    while (r, c) in region and (r + rd, c + cd) not in region:
+                        seen.add((r, c))
+                        r += cd * scalar
+                        c += rd * scalar
+
+    return sides
+
+
+print(solve())
