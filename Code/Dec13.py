@@ -1,6 +1,6 @@
 import re
 with open('Input/Dec13.txt') as f:
-    lines = f.readlines()  # Read all lines into a list
+    lines = f.readlines()
     A, B, prizes = [], [], []
     for i in range(0, len(lines), 4):
         A.append(tuple(map(int, re.findall(r'\d+', lines[i]))))
