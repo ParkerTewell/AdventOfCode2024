@@ -1,3 +1,5 @@
+from copy import deepcopy
+from itertools import chain
 with open('Input/Dec15.txt') as f:
     lines = f.readlines()
     grid = [list(line.strip())
@@ -74,20 +76,22 @@ def fatten_grid(grid):
 def pt2():
     global grid
     pos = find_start(grid)
-    for dir in moves:
-        new_pos = (pos[0]+directions[dir][0], pos[1]+directions[dir][1])
-        if (0, 0) <= new_pos <= (n, m):
-            if grid[new_pos[0]][new_pos[1]] in "[]" and push_fat_boxes(new_pos, dir):
-                grid[pos[0]][pos[1]] = "."
-                pos = new_pos
-                grid[pos[0]][pos[1]] = '@'
-            elif grid[new_pos[0]][new_pos[1]] == ".":
-                grid[pos[0]][pos[1]] = '.'
-                pos = new_pos
-                grid[pos[0]][pos[1]] = '@'
-            # print(f"move {dir}")
-            # for r in grid:
-            #     print(r)
+    with open("mysoln.txt", "w") as file:
+        for dir in moves:
+            new_pos = (pos[0]+directions[dir][0], pos[1]+directions[dir][1])
+            if (0, 0) <= new_pos <= (n, m):
+                if grid[new_pos[0]][new_pos[1]] in "[]" and push_fat_boxes(new_pos, dir):
+                    grid[pos[0]][pos[1]] = "."
+                    pos = new_pos
+                    grid[pos[0]][pos[1]] = '@'
+                elif grid[new_pos[0]][new_pos[1]] == ".":
+                    grid[pos[0]][pos[1]] = '.'
+                    pos = new_pos
+                    grid[pos[0]][pos[1]] = '@'
+                file.write(f"move {dir}\n")
+                for r in grid:
+                    r = ''.join(r)
+                    file.write(f"{r}\n")
     return sum_boxes(grid)
 
 
@@ -117,6 +121,7 @@ def sim_vert_push(region, dir):
 def detect_region(pos, dir, region):
     if pos in region:
         return region
+
     if grid[pos[0]][pos[1]] == '[':
         region.add(pos)
         region |= detect_region((pos[0], pos[1]+1), dir, region)
@@ -131,11 +136,8 @@ def detect_region(pos, dir, region):
 
 
 def has_wall(region, dir):
-    row = region[0][0]+directions[dir][0]
-    col_range = [pos[1] for pos in region]
-    min_col, max_col = min(col_range), max(col_range)
-    for col in range(min_col, max_col+1):
-        if grid[row][col] == "#":
+    for box in region:
+        if grid[box[0]+directions[dir][0]][box[1]] == "#":
             return True
     return False
 
@@ -175,8 +177,6 @@ def sim_lat_push(start, end, dir):
 
 grid = fatten_grid(grid)
 n, m = len(grid), len(grid[0])
-# print(pt1(grid))
-# print("initial state")
+print(pt2())
 # for r in grid:
 #     print(r)
-print(pt2())
