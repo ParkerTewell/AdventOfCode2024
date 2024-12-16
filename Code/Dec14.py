@@ -38,20 +38,21 @@ def findTree(start, end):
         for x, y in res:
             grid[y][x] += 1
         vars.append((i, np.var(grid)))
-    i, _ = min(vars, key=lambda x: x[1])
-    plot_grid(i)
-    return i
+    i, v = min(vars, key=lambda x: x[1])
+    return i, v
 
 
-def plot_grid(i):
-    grid = np.array([[0] * w for _ in range(h)])
-    res = simulate(i)
-    for x, y in res:
-        grid[y][x] += 1
+def plot_grid(grid):
     plt.figure(figsize=(10, 10))
     heatmap(grid)
     plt.show()
 
 
 print(countQuadrants(simulate(100)))  # pt1
-print(findTree(1, 10000))  # pt2
+i, v = findTree(1, 10000)  # pt2
+print(i, v)
+grid = np.array([[0] * w for _ in range(h)])
+res = simulate(i)
+for x, y in res:
+    grid[y][x] += 1
+plot_grid(grid)
