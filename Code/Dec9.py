@@ -1,4 +1,4 @@
-from collections import defaultdict, deque
+from collections import defaultdict
 with open('Input/Dec9.txt') as f:
     line = f.readline()
 

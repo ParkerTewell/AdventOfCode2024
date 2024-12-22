@@ -1,5 +1,3 @@
-from copy import deepcopy
-from itertools import chain
 with open('Input/Dec15.txt') as f:
     lines = f.readlines()
     grid = [list(line.strip())
