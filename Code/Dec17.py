@@ -6,21 +6,19 @@ with open('Input/Dec17.txt') as f:
     B = int(re.search(r'\d+', lines[1]).group())
     C = int(re.search(r'\d+', lines[2]).group())
     instructions = list(map(int, re.findall(r'\d', lines[-1])))
-    target = ','.join(re.findall(r'\d', lines[-1]))
-    ptr, eof, output = 0, len(instructions), ''
 
 
-def divA(A, num):
+def adv(A, num):
     return A // 2**num
     # print(f'A {A}')
 
 
-def xor(B, num):
+def bxl(B, num):
     return B ^ num
     # print(f"B {B}")
 
 
-def convert(A, B, C, num):
+def combo(A, B, C, num):
     if num == 4:
         num = A
     elif num == 5:
@@ -30,81 +28,86 @@ def convert(A, B, C, num):
     return num
 
 
-def combo(num):
+def bst(num):
     return num % 8
 
 
 def out(num):
-    return str((num) % 8)+','
+    return str((num) % 8)
 
 
-def jump(A, num, ptr):
+def jnz(A, num, ptr):
     return num if A != 0 else ptr
-    # print(f"jump {ptr}")
+    # print(f"jnz {ptr}")
 
 
-def BxorC(B, C):
+def bxc(B, C):
     return B ^ C
 
 
-def divB(A, num):
+def bdv(A, num):
     return A // 2**num
 
 
-def divC(A, num):
+def cdv(A, num):
     return A // 2**num
-
-
-ops = {0: divA, 1: xor, 2: combo, 3: jump,
-       4: BxorC, 5: out, 6: divB, 7: divC}
 
 
 def pt1(A, B, C, instructions):
-    ptr, eof, output = 0, len(instructions), ''
+    ptr, eof, output = 0, len(instructions), []
 
     while ptr < eof:
         opcode = instructions[ptr]
         literal = instructions[ptr + 1]
         ptr += 2
 
-        # Match the opcode with the corresponding function directly
         match opcode:
             case 0:
-                A = divA(A, literal)
+                A = adv(A, literal)
             case 1:
-                B = xor(B, literal)
+                B = bxl(B, literal)
             case 2:
-                literal = convert(A, B, C, literal)
-                B = combo(literal)
+                literal = combo(A, B, C, literal)
+                B = bst(literal)
             case 3:
-                ptr = jump(A, literal, ptr)
+                ptr = jnz(A, literal, ptr)
             case 4:
-                B = BxorC(B, C)
+                B = bxc(B, C)
             case 5:
-                literal = convert(A, B, C, literal)
-                output += out(literal)
+                literal = combo(A, B, C, literal)
+                output.append(out(literal))
             case 6:
-                B = divB(A, literal)
+                B = bdv(A, literal)
             case 7:
-                literal = convert(A, B, C, literal)
-                C = divC(A, literal)
+                literal = combo(A, B, C, literal)
+                C = cdv(A, literal)
 
-    return output[:-1]
-
-
-def pt2(B, C, instructions, target):
-    output = ''
-    newA = 100000000000000
-
-    while output != target:
-        newA += 1
-        output = pt1(newA, B, C, instructions)
-        if newA % 100000000 == 0:
-            print(newA)
-
-    return newA
+    return output
 
 
-output = pt1(A, B, C, instructions)
-print(output)
-print(pt2(B, C, instructions, target))
+# The last three bits of A determine the output; so we find the right-hand digit
+# of the program then shift A three bits and try another value 0-7
+# we continue this until we've found all values in program.
+def pt2(A, B, C, instructions, compare_index):
+    result = set()
+    for n in range(8):
+        A2 = (A << 3) | n
+        output = list(map(int, pt1(A2, B, C, instructions)))
+        # print(output)
+        # print(instructions[-compare_index:])
+        if output == instructions[-compare_index:]:
+            if output == instructions:
+                result.add(A2)
+            else:
+                possible = pt2(A2, B, C, instructions, compare_index+1)
+                if possible:
+                    result.add(possible)
+
+    if len(result) > 0:
+        return min(result)
+    else:
+        return 0
+
+
+print(','.join(pt1(A, B, C, instructions)))
+print(pt2(0, 0, 0, instructions, 1))
