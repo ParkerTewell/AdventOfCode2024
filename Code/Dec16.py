@@ -1,5 +1,4 @@
 from heapq import heappop, heappush
-import heapq
 with open('Input/Dec16.txt') as f:
     grid = [list(line.strip()) for line in f.readlines()]
 n, m = len(grid), len(grid[0])
@@ -18,55 +17,58 @@ def find_start_end():
 
 
 def dijkstra(start, end):
-    pq = [(0, start[0], start[1], 0)]  # score, r, c, d
-    seen, min_score = set(), float('inf')
+    # score, r, c, d
+    pq = [(0, start[0], start[1], 0, {(start[0], start[1], 0)})]
+    seen, min_score, min_path = set(), float('inf'), None
 
     while pq:
-        score, r, c, d = heapq.heappop(pq)
+        score, r, c, d, path = heappop(pq)
 
         if (r, c) == end:
             min_score = min(min_score, score)
+            min_path = path
         elif (r, c, d) not in seen:
             seen.add((r, c, d))
             nr, nc = r+directions[d][0], c+directions[d][1]
             if grid[nr][nc] != '#':
-                heapq.heappush(pq, (score+1, nr, nc, d))
+                heappush(pq, (score+1, nr, nc, d, path | {(nr, nc, score+1)}))
 
             # rotate clockwise
             new_d = (d+1) % 4
-            heapq.heappush(pq, (score + 1000, r, c, new_d))
+            heappush(pq, (score + 1000, r, c, new_d,
+                     path | {(nr, nc, score+1000)}))
 
             # rotate counterclockwise
             new_d = (d-1) % 4
-            heapq.heappush(pq, (score + 1000, r, c, new_d))
+            heappush(pq, (score + 1000, r, c, new_d,
+                     path | {(nr, nc, score+1000)}))
 
-    return min_score
+    return min_score, min_path
 
 
-def shortest_paths(start, end):
+def shortest_paths(start, end, shortest_path):
     # score, r, c, d, path
-    pq = [(0, start[0], start[1], 0, [(start[0], start[1])])]
-    min_score, paths = float('inf'), []
+    pq = [(0, start[0], start[1], 0, {(start[0], start[1], 0)})]
 
     while pq:
-        score, r, c, d, path = heapq.heappop(pq)
+        score, r, c, d, path = heappop(pq)
         if (r, c) == end:
-            if score < min_score:
-                min_score = score
-                paths = [path]
-            elif score == min_score:
-                paths.append(path)
+            continue
+        if (r, c, score) in shortest_path:
+            shortest_path |= path
             continue
 
         for i, (dr, dc) in enumerate(directions):
             nr, nc = r+dr, c+dc
-            if grid[nr][nc] != '#' and (nr, nc) not in path and score < min_score:
-                new_path = path+[(nr, nc)]
+            if grid[nr][nc] != '#':
                 new_score = score+1 if i == d else score+1000
-                heapq.heappush(pq, (new_score, nr, nc, i, new_path))
-    return paths
+                heappush(pq, (new_score, nr, nc, i,
+                         path | {(nr, nc, new_score)}))
+    return shortest_path
 
 
 start, end = find_start_end()
-print(dijkstra(start, end))
-print(len({node for path in shortest_paths(start, end) for node in path}))
+min_score, min_path = dijkstra(start, end)
+print(min_score, len(min_path))
+print(len(shortest_paths(start, end, min_path)))
+# print(len({node for path in shortest_paths(start, end) for node in path}))
