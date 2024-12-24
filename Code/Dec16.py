@@ -1,5 +1,6 @@
 import heapq
-with open('Input/Dec16.txt') as f:
+from collections import defaultdict, deque
+with open('Code/Dec16.txt') as f:
     grid = [list(line.strip()) for line in f.readlines()]
 n, m = len(grid), len(grid[0])
 directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -17,57 +18,43 @@ def find_start_end():
 
 
 def dijkstra(start, end):
-    pq = [(0, start[0], start[1], 0)]  # score, r, c, d
-    seen, min_score = set(), float('inf')
-
+    # prev needed for pt2, backtracking to find multiple optimal paths
+    pq = [(0, start[0], start[1], 0, None, None, None)]  # score, r, c, d, prev_r, prev_c, prev_d
+    lowest_cost, min_score = defaultdict(lambda: float('inf')), float('inf')
+    backtrack = defaultdict(set)
+    end_state = None # needed to trace back optimal paths
     while pq:
-        score, r, c, d = heapq.heappop(pq)
-
+        score, r, c, d, pr, pc, pd = heapq.heappop(pq)
+        if score > lowest_cost[(r, c, d)]:
+            continue
+        lowest_cost[(r, c, d)] = score  # if we're processing this is the min cost for the node
+        backtrack[(r,c,d)].add((pr,pc,pd))
         if (r, c) == end:
+            if score > min_score:
+                break
+            end_state = (r,c,d)
             min_score = min(min_score, score)
-        elif (r, c, d) not in seen:
-            seen.add((r, c, d))
+        else:
             nr, nc = r+directions[d][0], c+directions[d][1]
-            if grid[nr][nc] != '#':
-                heapq.heappush(pq, (score+1, nr, nc, d))
+            next_moves = {(score+1, nr, nc, d), (score + 1000, r, c, (d+1) % 4), (score + 1000, r, c, (d-1) % 4)}
+            for new_score, nr, nc, nd in next_moves:
+                if grid[nr][nc] != '#' and score <= lowest_cost[(nr,nc,nd)]:
+                    heapq.heappush(pq, (new_score, nr, nc, nd, r, c, d))
+    
+    optimal_paths, seen = deque([end_state]), set()
+    while optimal_paths:
+        state = optimal_paths.popleft()
+        seen.add(state)
+        for prev in backtrack[state]:
+            if prev not in seen:
+                seen.add(prev)
+                optimal_paths.append(prev)
+    seen = set((r,c) for r,c,_ in seen)
 
-            # rotate clockwise
-            new_d = (d+1) % 4
-            heapq.heappush(pq, (score + 1000, r, c, new_d))
-
-            # rotate counterclockwise
-            new_d = (d-1) % 4
-            heapq.heappush(pq, (score + 1000, r, c, new_d))
-
-    return min_score
-
-
-def shortest_paths(start, end):
-    pq = [(0, start[0], start[1], 0, [(start[0], start[1])])]
-    min_score, paths = float('inf'), []
-
-    while pq:
-        score, r, c, d, path = heapq.heappop(pq)
-        if (r, c) == end:
-            if score < min_score:
-                min_score = score
-                paths = [path]
-            elif score == min_score:
-                paths.append(path)
-            continue
-        if score > min_score:
-            continue
-
-        for i, (dr, dc) in enumerate(directions):
-            nr, nc = r+dr, c+dc
-            if grid[nr][nc] != '#' and (nr, nc) not in path and score < min_score:
-                new_path = path+[(nr, nc)]
-                new_score = score+1 if i == d else score+1000
-                heapq.heappush(pq, (new_score, nr, nc, i, new_path))
-    return paths
+    return min_score, len(seen)-1
 
 
 start, end = find_start_end()
-min_score = dijkstra(start, end)
-print(min_score)
-print(len({node for path in shortest_paths(start, end) for node in path}))
+min_score, seats = dijkstra(start, end)
+print(min_score, seats)
+#print(len({node for path in shortest_paths(start, end) for node in path}))
