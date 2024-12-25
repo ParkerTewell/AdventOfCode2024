@@ -17,4 +17,6 @@ def completable(d):
     return seen[d]
 
 
-print(sum(completable(d) for d in designs))
+soln = [completable(d) for d in designs]
+print(sum(True if s else False for s in soln))
+print(sum(soln))
