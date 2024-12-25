@@ -1,21 +1,20 @@
+from collections import defaultdict
 lines = open('Input/Dec19.txt').readlines()
 patterns = lines[0].strip().split(', ')
 designs = [d.strip() for d in lines[2:]]
 maxLen = max(map(len, patterns))
-seen = {}
+seen = defaultdict(int)
 
 
 def completable(d):
     if d == '':
-        return True
+        return 1
     if d in seen:
         return seen[d]
     for i in range(min(len(d), maxLen)+1):
         if d[:i] in patterns and completable(d[i:]):
-            seen[d] = True
-            return True
-    seen[d] = False
-    return False
+            seen[d] += completable(d[i:])
+    return seen[d]
 
 
 print(sum(completable(d) for d in designs))
