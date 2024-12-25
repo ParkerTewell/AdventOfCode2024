@@ -74,22 +74,17 @@ def fatten_grid(grid):
 def pt2():
     global grid
     pos = find_start(grid)
-    with open("mysoln.txt", "w") as file:
-        for dir in moves:
-            new_pos = (pos[0]+directions[dir][0], pos[1]+directions[dir][1])
-            if (0, 0) <= new_pos <= (n, m):
-                if grid[new_pos[0]][new_pos[1]] in "[]" and push_fat_boxes(new_pos, dir):
-                    grid[pos[0]][pos[1]] = "."
-                    pos = new_pos
-                    grid[pos[0]][pos[1]] = '@'
-                elif grid[new_pos[0]][new_pos[1]] == ".":
-                    grid[pos[0]][pos[1]] = '.'
-                    pos = new_pos
-                    grid[pos[0]][pos[1]] = '@'
-                file.write(f"move {dir}\n")
-                for r in grid:
-                    r = ''.join(r)
-                    file.write(f"{r}\n")
+    for dir in moves:
+        new_pos = (pos[0]+directions[dir][0], pos[1]+directions[dir][1])
+        if (0, 0) <= new_pos <= (n, m):
+            if grid[new_pos[0]][new_pos[1]] in "[]" and push_fat_boxes(new_pos, dir):
+                grid[pos[0]][pos[1]] = "."
+                pos = new_pos
+                grid[pos[0]][pos[1]] = '@'
+            elif grid[new_pos[0]][new_pos[1]] == ".":
+                grid[pos[0]][pos[1]] = '.'
+                pos = new_pos
+                grid[pos[0]][pos[1]] = '@'
     return sum_boxes(grid)
 
 

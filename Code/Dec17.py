@@ -91,6 +91,8 @@ def pt1(A, B, C, instructions):
 def pt2(A, B, C, instructions, compare_index):
     result = set()
     for n in range(8):
+        # shift A by 3 bits; thats what we're filling in
+        # OR by n to test a 3 bit candidate
         A2 = (A << 3) | n
         output = list(map(int, pt1(A2, B, C, instructions)))
         # print(output)
