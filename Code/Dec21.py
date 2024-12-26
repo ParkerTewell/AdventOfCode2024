@@ -1,3 +1,4 @@
+import re
 from collections import deque, defaultdict
 
 # input -> rob1 soln -> rob1 input -> rob2 soln -> ...
@@ -55,22 +56,28 @@ def solve(codes, coords, keypad):
     return result
 
 
-# solve(codes, num_coords, num_keypad)
-rob1 = solve(codes, num_coords, num_keypad)
-print(f"rob1 {rob1}")
-print(min(map(len, rob1)))
+def identical_neighbors(s):
+    return sum(s[i] == s[i + 1] for i in range(len(s) - 1))
 
-rob2 = solve(rob1, dir_coords, dir_keypad)
-print(min(map(len, rob2)))
-# print('v<<A>>^A<A>AvA<^AA>A<vAAA>^A' in rob2)
-rob3 = solve(rob2, dir_coords, dir_keypad)
-# print(rob3)
-# print()
-# print(cache[('^', 'A')], cache[('A', '^')])
-# print('v<<A>>^A<A>AvA<^AA>A<vAAA>^A' in rob2)
-# print(cache)
-# <v<A>>^A<A>A<AAv>A^Av<AAA^>A
-# v<<A>>^A<A>A<Av>A<^A>A<vAAA>^A
 
-# <vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
-# v<<A>A<A>^>AvAA^<A>Av<<A>^>AvA^Av<A^>Av<<A>^A>AAvA^Av<<A>A^>AAAvA^<A>A
+def pt1(codes):
+    soln = 0
+    for code in codes:
+        num = int(re.search(r'\d+', code).group())
+        rob1 = solve([code], num_coords, num_keypad)
+        # some optimal paths for one soln result in a sub optimal path for a next step
+        rob1 = sorted(rob1, key=lambda x: identical_neighbors(x), reverse=True)
+
+        rob2 = solve([rob1[0]], dir_coords, dir_keypad)
+        rob2 = sorted(rob2, key=lambda x: identical_neighbors(x), reverse=True)
+        # print(min(map(len, rob2)), max(map(len, rob2)))
+
+        rob3 = solve([rob2[0]], dir_coords, dir_keypad)
+        rob3 = sorted(rob3, key=lambda x: identical_neighbors(x), reverse=True)
+        # print(min(map(len, rob3)), max(map(len, rob3)))
+        print(f"{len(rob3[0])} * {num}")
+        soln += len(rob3[0]) * num
+    return soln
+
+
+print(pt1(codes))
