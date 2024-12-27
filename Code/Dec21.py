@@ -3,32 +3,36 @@ from collections import deque, defaultdict
 
 # input -> rob1 soln -> rob1 input -> rob2 soln -> ...
 # save the key coords to reduce duplicate work for finding starts and ends
+from collections import deque, defaultdict
+from itertools import product
+
 codes = [line.strip() for line in open('Input/Dec21.txt').readlines()]
-num_keypad = [["7", "8", "9"],
-              ["6", "5", "4"],
-              ["3", "2", "1"],
-              ["", "0", "A"]]
+cache = defaultdict(set)  # (origin, dest) : list of paths
+num_keypad = [
+    ["7", "8", "9"],
+    ["4", "5", "6"],
+    ["1", "2", "3"],
+    [None, "0", "A"]
+]
 num_coords = {num_keypad[r][c]: (r, c) for r in range(
     len(num_keypad)) for c in range(len(num_keypad[r]))}
-
-dir_keypad = [["", "^", "A"],
-              ["<", "v", ">"]]
+dir_keypad = [
+    [None, "^", "A"],
+    ["<", "v", ">"]
+]
 dir_coords = {dir_keypad[r][c]: (r, c) for r in range(
     len(dir_keypad)) for c in range(len(dir_keypad[r]))}
 
-# saves optimal paths from one key to another
-cache = defaultdict(set)  # (origin, dest) : list of paths
-
 
 def bfs(src, dest, coords, keypad):
-    q, min_dist = deque(
-        [(coords[src][0], coords[src][1], "")]), float('inf')
     if cache[(src, dest)]:
         return cache[(src, dest)]
     elif src == dest:
-        cache[(src, dest)] = "A"
+        cache[(src, dest)] = {"A"}
         return cache[(src, dest)]
     else:
+        q = deque([(coords[src][0], coords[src][1], "")])
+        min_dist = float('inf')
         while q:
             r, c, path = q.popleft()
             for nr, nc, mv in [(r-1, c, "^"), (r+1, c, "v"), (r, c-1, "<"), (r, c+1, ">")]:
@@ -42,42 +46,43 @@ def bfs(src, dest, coords, keypad):
         return cache[(src, dest)]
 
 
-def solve(codes, coords, keypad):
-    for code in codes:
-        code = "A"+code
-        result = []
-        for i in range(len(code)-1):
-            # print(f"Find shortest path between {code[i], code[i+1]}")
-            bfs(code[i], code[i+1], coords, keypad)
-            # print(cache[code[i], code[i+1]])
-            result = [
-                path + p for path in result or [''] for p in cache[code[i], code[i+1]]]
-            # print(f"result {result}")
-    return result
+def solve(seq):
+    options = [cache[(src, dest)] for src, dest in zip("A" + seq, seq)]
+    return ["".join(x) for x in product(*options)]
+
+
+def generate_paths(coords, keypad):
+    flat = [key for row in keypad for key in row if key]
+    for src in flat:
+        for dest in flat:
+            r1, c1 = coords[src]
+            r2, c2 = coords[dest]
+            if keypad[r1][c1] is not None and keypad[r2][c2] is not None:
+                bfs(src, dest, coords, keypad)
 
 
 def identical_neighbors(s):
     return sum(s[i] == s[i + 1] for i in range(len(s) - 1))
 
 
-def pt1(codes):
-    soln = 0
+def calc_complexity(codes):
+    total = 0
     for code in codes:
-        num = int(re.search(r'\d+', code).group())
-        rob1 = solve([code], num_coords, num_keypad)
-        # some optimal paths for one soln result in a sub optimal path for a next step
-        rob1 = sorted(rob1, key=lambda x: identical_neighbors(x), reverse=True)
-
-        rob2 = solve([rob1[0]], dir_coords, dir_keypad)
-        rob2 = sorted(rob2, key=lambda x: identical_neighbors(x), reverse=True)
-        # print(min(map(len, rob2)), max(map(len, rob2)))
-
-        rob3 = solve([rob2[0]], dir_coords, dir_keypad)
-        rob3 = sorted(rob3, key=lambda x: identical_neighbors(x), reverse=True)
-        # print(min(map(len, rob3)), max(map(len, rob3)))
-        print(f"{len(rob3[0])} * {num}")
-        soln += len(rob3[0]) * num
-    return soln
+        robot1 = solve(code)
+        next = robot1
+        for _ in range(25):
+            paths = []
+            for seq in next:
+                paths += solve(seq)
+            # some optimal paths for one soln result in a sub optimal path for a next step
+            minlen = min(map(len, paths))
+            next = [seq for seq in paths if len(seq) == minlen]
+            next = sorted(next, key=identical_neighbors, reverse=True)
+            # print(next[0])
+        total += len(next[0]) * int(code[:-1])
+    return total
 
 
-print(pt1(codes))
+generate_paths(num_coords, num_keypad)
+generate_paths(dir_coords, dir_keypad)
+print(calc_complexity(codes))
