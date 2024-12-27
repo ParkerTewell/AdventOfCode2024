@@ -1,23 +1,27 @@
-import re
 from collections import deque, defaultdict
-
+from functools import lru_cache
+from itertools import product
+# pt1
 # input -> rob1 soln -> rob1 input -> rob2 soln -> ...
 # save the key coords to reduce duplicate work for finding starts and ends
-from collections import deque, defaultdict
-from itertools import product
-
+# some optimal paths for one soln result in a sub optimal path for a next step
+# pt2
+# instead of solving the problem one level at a time
+# solve each pair in the sequence all the way down to n dfs style
+# and then reuse those calculations when calculating the other pairs
 codes = [line.strip() for line in open('Input/Dec21.txt').readlines()]
-cache = defaultdict(set)  # (origin, dest) : list of paths
+seqs = defaultdict(list)  # (origin, dest) : list of paths
 num_keypad = [
     ["7", "8", "9"],
     ["4", "5", "6"],
     ["1", "2", "3"],
-    [None, "0", "A"]
+    ["", "0", "A"]
 ]
 num_coords = {num_keypad[r][c]: (r, c) for r in range(
     len(num_keypad)) for c in range(len(num_keypad[r]))}
+
 dir_keypad = [
-    [None, "^", "A"],
+    ["", "^", "A"],
     ["<", "v", ">"]
 ]
 dir_coords = {dir_keypad[r][c]: (r, c) for r in range(
@@ -25,11 +29,11 @@ dir_coords = {dir_keypad[r][c]: (r, c) for r in range(
 
 
 def bfs(src, dest, coords, keypad):
-    if cache[(src, dest)]:
-        return cache[(src, dest)]
+    if seqs[(src, dest)]:
+        return seqs[(src, dest)]
     elif src == dest:
-        cache[(src, dest)] = {"A"}
-        return cache[(src, dest)]
+        seqs[(src, dest)] = ["A"]
+        return seqs[(src, dest)]
     else:
         q = deque([(coords[src][0], coords[src][1], "")])
         min_dist = float('inf')
@@ -37,17 +41,17 @@ def bfs(src, dest, coords, keypad):
             r, c, path = q.popleft()
             for nr, nc, mv in [(r-1, c, "^"), (r+1, c, "v"), (r, c-1, "<"), (r, c+1, ">")]:
                 if (nr, nc) == coords[dest] and len(path)+1 <= min_dist:
-                    cache[(src, dest)].add(path+mv+'A')
+                    seqs[(src, dest)].append(path+mv+'A')
                     min_dist = min(min_dist, len(path)+1)
                 elif len(path)+1 > min_dist:
-                    return cache[(src, dest)]
+                    return seqs[(src, dest)]
                 elif 0 <= nr < len(keypad) and 0 <= nc < len(keypad[nr]) and keypad[nr][nc]:
                     q.append((nr, nc, path+mv))
-        return cache[(src, dest)]
+        return seqs[(src, dest)]
 
 
-def solve(seq):
-    options = [cache[(src, dest)] for src, dest in zip("A" + seq, seq)]
+def solve_seq(seq):
+    options = [seqs[(src, dest)] for src, dest in zip("A" + seq, seq)]
     return ["".join(x) for x in product(*options)]
 
 
@@ -57,7 +61,7 @@ def generate_paths(coords, keypad):
         for dest in flat:
             r1, c1 = coords[src]
             r2, c2 = coords[dest]
-            if keypad[r1][c1] is not None and keypad[r2][c2] is not None:
+            if keypad[r1][c1] and keypad[r2][c2]:
                 bfs(src, dest, coords, keypad)
 
 
@@ -65,24 +69,27 @@ def identical_neighbors(s):
     return sum(s[i] == s[i + 1] for i in range(len(s) - 1))
 
 
-def calc_complexity(codes):
+@lru_cache
+def compute_length(seq, depth=25):
+    if depth == 1:
+        return sum(dir_lengths[(x, y)] for x, y in zip("A" + seq, seq))
+    length = 0
+    for x, y in zip("A" + seq, seq):
+        length += min(compute_length(subseq, depth - 1)
+                      for subseq in seqs[(x, y)])
+    return length
+
+
+def solve(codes):
     total = 0
     for code in codes:
-        robot1 = solve(code)
-        next = robot1
-        for _ in range(25):
-            paths = []
-            for seq in next:
-                paths += solve(seq)
-            # some optimal paths for one soln result in a sub optimal path for a next step
-            minlen = min(map(len, paths))
-            next = [seq for seq in paths if len(seq) == minlen]
-            next = sorted(next, key=identical_neighbors, reverse=True)
-            # print(next[0])
-        total += len(next[0]) * int(code[:-1])
+        seqs = solve_seq(code)
+        length = min(map(compute_length, seqs))
+        total += length * int(code[:-1])
     return total
 
 
 generate_paths(num_coords, num_keypad)
 generate_paths(dir_coords, dir_keypad)
-print(calc_complexity(codes))
+dir_lengths = {key: len(value[0]) for key, value in seqs.items()}
+print(solve(codes))
